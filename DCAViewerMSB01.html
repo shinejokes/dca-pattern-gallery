@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>DCA Pattern Viewer - Multiset 45-Digit Edition</title>
+  <style>
+    :root{--fg:#111;--bg:#fff;--brand:#2563eb;--mut:#64748b;--success:#059669;--error:#ef4444;--accent:#7c3aed}
+    *{box-sizing:border-box}
+    html, body { overflow-x: hidden; width: 100%; margin: 0; background: #f8fafc; color: var(--fg); font: 14px/1.5 system-ui, sans-serif; }
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 15px 0; position: sticky; top: 0; z-index: 100; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+    h1 { font-size: 20px; margin: 0 0 10px 0; color: var(--accent); font-weight: 800; }
+    
+    /* 제어판 스타일 */
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .input-group { display: flex; flex-direction: column; gap: 4px; }
+    .input-group label { font-size: 11px; font-weight: bold; color: var(--mut); }
+    
+    /* 45자리 전용 초대형 입력창 */
+    #genomeInput { 
+      width: 540px; 
+      font-family: ui-monospace, monospace; 
+      font-size: 16px; 
+      font-weight: bold; 
+      border: 2px solid var(--accent); 
+      padding: 10px; 
+      border-radius: 8px;
+      letter-spacing: 2px;
+      background: #faf5ff;
+      text-align: center;
+    }
+    #genomeInput:focus { outline: 2px solid var(--accent); }
+    
+    input[type=text], select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background:#fff; }
+    input[type=number] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 65px; text-align: center; }
+    
+    .range-box { display:flex; align-items:center; gap:6px; background:#f1f5f9; padding:5px 10px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; font-weight:bold; }
+    .select-box { display:flex; flex-direction:column; gap:3px; background:#f1f5f9; padding:7px 10px; border-radius:8px; border:1px solid #e2e8f0; font-size:11px; font-weight:bold; color:#475569; }
+    .select-box select { min-width:130px; padding:6px; font-weight:600; color:#111; }
+    #legend { display:flex; gap:4px; align-items:center; min-height:18px; margin-top:4px; }
+    .swatch { width:14px; height:14px; border-radius:3px; border:1px solid rgba(0,0,0,.15); }
+    
+    button { padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    button:hover:not(:disabled) { background: #f1f5f9; }
+    button.primary { background: var(--accent); color: #fff; border: none; }
+    button.success { background: var(--success); color: #fff; border: none; }
+    
+    /* 레이아웃 */
+    .viewer-layout { display: flex; gap: 24px; margin-top: 24px; align-items: flex-start; }
+    .canvas-container { 
+      flex: 1; 
+      background: #222; 
+      border-radius: 12px; 
+      padding: 20px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 520px;
+      box-shadow: inset 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .canvas-container canvas { 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+      max-width: 100%; 
+      max-height: 75vh; 
+      height: auto; 
+      object-fit: contain; 
+      display: block; 
+    }
+    
+    .sidebar { width: 340px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .status-item { display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .status-item strong { color: #334155; }
+    .status-val { font-family: ui-monospace, monospace; font-weight: bold; }
+    
+    .validation-msg { font-size: 12px; font-weight: bold; margin-top: 4px; display: none; }
+    .validation-msg.success { color: var(--success); display: block; }
+    .validation-msg.error { color: var(--error); display: block; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>DCA Pattern Viewer <span style="font-size:12px; font-weight:normal; color:var(--mut);">| Multiset Rule 45-Digit Edition</span></h1>
+      <div class="controls">
+        <div class="input-group">
+          <label for="genomeInput">Genome 수치 입력 (45자리 고정: 1~4 숫자만 가능)</label>
+          <input id="genomeInput" type="text" maxlength="45" placeholder="1~4로 구성된 45자리 입력" value="444144314411422112444311211111111111142444444" />
+          <div id="validationMsg" class="validation-msg"></div>
+        </div>
+        
+        <div class="select-box">Palette<select id="paletteName"></select><div id="legend"></div></div>
+        <div class="select-box">Color Mapping<select id="mappingMode">
+          <option value="history16" selected>16-Group History (Hash + Offset)</option>
+          <option value="last">Final face color only</option>
+        </select></div>
+        <div class="range-box">Color Offset: <input id="colorOffset" type="number" value="0" min="0" max="999" /></div>
+        <div class="range-box">Seed: <input id="seedInput" type="text" maxlength="4" value="1122" style="width:50px; text-align:center; font-weight:bold;" /></div>
+        <div class="range-box">Caption: <input id="nameInput" type="text" value="DCA viewer" maxlength="40" style="width:120px; font-weight:bold;" /></div>        
+        <div class="range-box">Size t: <input id="previewTInput" type="number" value="10" min="7" max="13" style="width:50px; text-align:center;" /></div>
+        
+        <button id="btnRender" class="primary">Render</button>
+      </div>
+    </div>
+  </header>
+  
+  <main class="wrap">
+    <div class="viewer-layout">
+      <div class="canvas-container" id="canvasContainer"></div>
+      
+      <aside class="sidebar">
+        <h3 style="margin: 0 0 10px 0; font-size:16px; border-bottom: 2px solid var(--accent); padding-bottom: 8px;">DCA Info & Controls</h3>
+        
+        <div class="status-item">
+          <strong>Genome Format</strong>
+          <span id="statFormat" class="status-val">-</span>
+        </div>
+        <div class="status-item">
+          <strong>Active Rule (RAC)</strong>
+          <span id="statRAC" class="status-val">-</span>
+        </div>
+        <div class="status-item">
+          <strong>Lineage States</strong>
+          <span id="statStates" class="status-val">-</span>
+        </div>
+        
+        <div class="input-group" style="margin-top: 10px;">
+          <label>Image Size (Zoom)</label>
+          <select id="zoomSelect" style="width:100%; font-weight:bold; padding:8px;">
+            <option value="fit" selected>Fit Screen (자동 맞춤)</option>
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1.0">100% (원본 크기)</option>
+            <option value="1.5">150%</option>
+            <option value="2.0">200%</option>
+          </select>
+        </div>
+        
+        <button id="btnSave" class="success" style="width:100%; padding:12px; font-size:14px; margin-top:10px;">📁 이미지로 저장 (PNG)</button>
+      </aside>
+    </div>
+  </main>
+  
+<script>
+var $ = function(id) { return document.getElementById(id); };
+
+const PALETTES = {
+ contrast4: ['#0b3d91', '#00a878', '#ffd23f', '#d7263d'],
+ earth4: ['#283618', '#606c38', '#dda15e', '#bc6c25'],
+ bluegreen4: ['#073b4c', '#118ab2', '#06d6a0', '#80ffdb'],
+ mono4: ['#111111', '#555555', '#aaaaaa', '#ffffff'],
+ cathedral: ['#1B3A57', '#3F88C5', '#F2C14E', '#F78154', '#7B2D8E', '#2EC4B6', '#E71D36', '#BFD7EA', '#F7FFF7'],
+ redgold :['#3B0D11','#8C1C13','#E85D04','#FFBA08'], 
+ emeraldgreen: ['#081C15','#1B4332','#2D6A4F','#95D5B2'],
+ oceanblue:[ '#03045E','#0077B6','#00B4D8','#CAF0F8'],
+ fireash:['#1B1B1E','#A4161A','#FF6B35','#F7C59F'],
+ jadetemple:['#1A2421','#216869','#49A078','#9CC5A1'],
+ violetmagnata:['#240046', '#5A189A', '#9D4EDD', '#E0AAFF' ]
+};
+const PAL_LABELS = {contrast4:'Contrast 4', earth4:'Earth 4', bluegreen4:'BlueGreen 4', mono4:'Mono 4', cathedral:'Cathedral',
+ redgold: 'Red Gold',emeraldgreen:'Emerald Green', oceanblue:'Ocean Blue', fireash:'Fire Ash',jadetemple:'Jade Temple',violetmagnata: 'Violet Magnata'};
+
+for (const k of Object.keys(PALETTES)) { 
+  const opt=document.createElement('option'); 
+  opt.value=k; 
+  opt.textContent=PAL_LABELS[k]||k; 
+  $('paletteName').appendChild(opt); 
+}
+$('paletteName').value = 'contrast4';
+
+function updateLegend(){ 
+  $('legend').innerHTML=''; 
+  PALETTES[$('paletteName').value].slice(0,12).forEach(hex=>{ 
+    const s=document.createElement('span'); 
+    s.className='swatch'; 
+    s.style.background=hex; 
+    $('legend').appendChild(s); 
+  }); 
+}
+$('paletteName').addEventListener('change', () => { updateLegend(); triggerRender(); });
+$('mappingMode').addEventListener('change', triggerRender);
+$('colorOffset').addEventListener('input', triggerRender);
+$('seedInput').addEventListener('input', triggerRender);
+$('nameInput').addEventListener('input', triggerRender);
+$('previewTInput').addEventListener('input', triggerRender);
+
+updateLegend();
+
+const MSB_MAP = {}; 
+(function(){ 
+  let combos=[]; 
+  function gen(start,cur){ 
+    if(cur.length===4){combos.push(cur.join('')); return;} 
+    for(let i=start;i<=4;i++) gen(i,[...cur,i]); 
+  } 
+  gen(1,[]); 
+  combos.forEach((key,idx)=>MSB_MAP[key]=idx); 
+})();
+
+function rgbFromHex(hex){ 
+  const v=hex.replace('#',''); 
+  return [parseInt(v.slice(0,2),16), parseInt(v.slice(2,4),16), parseInt(v.slice(4,6),16)]; 
+}
+function hashCode(x){ 
+  x=Math.imul(x ^ (x>>>16), 2246822507); 
+  x=Math.imul(x ^ (x>>>13), 3266489909); 
+  return (x ^ (x>>>16))>>>0; 
+}
+
+// 45자리 Genome 분석 및 검증
+function parseGenomeInput() {
+  const raw = $('genomeInput').value.replace(/[^1-4]/g, ''); // 1~4 이외의 숫자 제거
+  const msgEl = $('validationMsg');
+  
+  if (raw.length === 45) {
+    msgEl.className = "validation-msg success";
+    msgEl.textContent = "✔ 45자리 Multiset Genome이 정상적으로 구성되었습니다.";
+    $('statFormat').textContent = "Multiset (45-Digit)";
+    return raw.split('').map(Number);
+  } else {
+    msgEl.className = "validation-msg error";
+    msgEl.textContent = `⚠ 45자리가 필요합니다. (현재 입력된 숫자: ${raw.length}개)`;
+    $('statFormat').textContent = "Incomplete";
+    return null;
+  }
+}
+
+let lastRenderedCanvas = null;
+
+function renderPaletteGrid(genome,t,seedArr,paletteName,mappingMode,offsetValue){
+  const N=1<<t, total=N*N; 
+  const faces=new Uint8Array(total); 
+  const lineage=new Uint32Array(total); 
+  const historyFlags=new Uint8Array(total); 
+  const used=new Set();
+  const faceRule=genome.slice(0,35), edgeRule=genome.slice(35);
+  
+  const getFaceColor=(n)=>{ const idx=MSB_MAP[[...n].sort().join('')]; used.add(idx); return faceRule[idx]||4; };
+  const edgeIdx=(a,b)=>{ const e=[0,1,2,3, 0,4,5,6, 0,0,7,8, 0,0,0,9][(Math.min(a,b)-1)*4 + (Math.max(a,b)-1)]; used.add(35+e); return e; };
+  
+  (function subdiv(x,y,size,level,n,parentCode,parentFlag){
+    const center=getFaceColor(n); 
+    const newCode=((parentCode*4 + (center-1))>>>0);
+    const currentFlag = parentFlag | (1 << (center - 1));
+    
+    if(level===t){ 
+      const idx=y*N+x; 
+      faces[idx]=center; 
+      lineage[idx]=newCode; 
+      historyFlags[idx]=currentFlag;
+      return; 
+    }
+    const half=size>>1, c1=n[0], c2=n[1], c3=n[2], c4=n[3];
+    const top=edgeRule[edgeIdx(c1,c2)], right=edgeRule[edgeIdx(c2,c3)], bottom=edgeRule[edgeIdx(c3,c4)], left=edgeRule[edgeIdx(c4,c1)];
+    
+    subdiv(x,y,half,level+1,[c1,top,center,left],newCode,currentFlag);
+    subdiv(x+half,y,half,level+1,[top,c2,right,center],newCode,currentFlag);
+    subdiv(x+half,y+half,half,level+1,[center,right,c3,bottom],newCode,currentFlag);
+    subdiv(x,y+half,half,level+1,[left,center,bottom,c4],newCode,currentFlag);
+  })(0,0,N,0,seedArr,0,0);
+  
+  const oc=document.createElement('canvas'); oc.width=N; oc.height=N; const cx=oc.getContext('2d'); const img=cx.createImageData(N,N);
+  const palette=PALETTES[paletteName], palRGB=palette.map(rgbFromHex);
+  const numColors = palette.length;
+  
+  for(let py=0;py<N;py++){
+    const row=py*N;
+    for(let px=0;px<N;px++){
+      const idx=row+px; let pi;
+      
+      if(mappingMode==='last') {
+        pi=(faces[idx]-1)%numColors;
+      } else if(mappingMode === 'history16') {
+        const k = historyFlags[idx]; 
+        const hashedKey = hashCode(k + offsetValue);
+        pi = hashedKey % numColors;
+      }
+      
+      let r=palRGB[pi][0], g=palRGB[pi][1], b=palRGB[pi][2];
+      const p=idx*4; img.data[p]=r; img.data[p+1]=g; img.data[p+2]=b; img.data[p+3]=255;
+    }
+  }
+  cx.putImageData(img,0,0);
+  return {canvas:oc, usedCount:used.size, uniqueLineageStates:new Set(lineage).size};
+}
+
+function buildHiResColorCanvas(genome, seedStr, paletteName, mappingMode, offsetValue, previewT){
+  const t = previewT;
+  const res = renderPaletteGrid(genome, t, seedStr.split('').map(Number), paletteName, mappingMode, offsetValue);
+  const oc = res.canvas;
+  const fc = document.createElement('canvas');
+  fc.width = oc.width; fc.height = oc.height;
+  const ctx = fc.getContext('2d');
+  ctx.drawImage(oc, 0, 0);
+  
+  const baseFontSize = Math.max(10, Math.floor(oc.width * 0.018)); 
+  ctx.font = `bold ${baseFontSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const dateStr = `${yyyy}.${mm}.${dd}`;
+
+  const nameStr = $('nameInput') ? $('nameInput').value : 'DCA viewer';
+
+  const line1Text = `${seedStr} ${genome.join('')}`; 
+  const line2Text = `${nameStr}  ${dateStr}`;        
+
+  const lineHeight = baseFontSize * 1.4; 
+  const bottomOffset = Math.max(10, Math.floor(oc.height * 0.02));
+  
+  const textX = oc.width / 2;
+  
+  ctx.fillText(line2Text, textX, oc.height - bottomOffset);
+  ctx.fillText(line1Text, textX, oc.height - bottomOffset - lineHeight);
+
+  return {canvas: fc, usedCount: res.usedCount, uniqueLineageStates: res.uniqueLineageStates};
+}
+
+function render() {
+  const g = parseGenomeInput();
+  if(!g) {
+    $('canvasContainer').innerHTML = "<span style='color:#ef4444; font-weight:bold;'>수정창을 확인해 주시게. 45자리의 '1~4' 숫자가 필요하네.</span>";
+    $('statRAC').textContent = "-";
+    $('statStates').textContent = "-";
+    return;
+  }
+  
+  const seedStr = $('seedInput').value || "1122";
+  const paletteName = $('paletteName').value;
+  const mappingMode = $('mappingMode').value;
+  const offsetVal = parseInt($('colorOffset').value) || 0;
+  const previewT = parseInt($('previewTInput').value) || 10;
+  
+  const result = buildHiResColorCanvas(g, seedStr, paletteName, mappingMode, offsetVal, previewT);
+  
+  $('canvasContainer').innerHTML = '';
+  $('canvasContainer').appendChild(result.canvas);
+  lastRenderedCanvas = result.canvas;
+  
+  // 메타데이터 갱신
+  $('statRAC').textContent = `${result.usedCount} / 45`;
+  $('statStates').textContent = result.uniqueLineageStates;
+  
+  applyZoom();
+}
+
+let renderTimeout;
+function triggerRender() {
+  clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(render, 150);
+}
+
+function applyZoom() {
+  if(!lastRenderedCanvas) return;
+  const val = $('zoomSelect').value;
+  if(val === 'fit') {
+    lastRenderedCanvas.style.maxWidth = '100%'; 
+    lastRenderedCanvas.style.maxHeight = '75vh';
+    lastRenderedCanvas.style.width = 'auto'; 
+    lastRenderedCanvas.style.height = 'auto';
+  } else {
+    const scale = parseFloat(val);
+    lastRenderedCanvas.style.maxWidth = 'none'; 
+    lastRenderedCanvas.style.maxHeight = 'none';
+    lastRenderedCanvas.style.width = (lastRenderedCanvas.width * scale) + 'px';
+    lastRenderedCanvas.style.height = (lastRenderedCanvas.height * scale) + 'px';
+  }
+}
+
+// 자동 정제 기능 (숫자 1~4 이외의 입력은 즉시 차단)
+$('genomeInput').oninput = function() {
+  this.value = this.value.replace(/[^1-4]/g, '');
+  triggerRender();
+};
+
+$('btnRender').onclick = render;
+$('zoomSelect').addEventListener('change', applyZoom);
+
+$('btnSave').onclick = function() {
+  if(!lastRenderedCanvas) return;
+  const raw = $('genomeInput').value.replace(/[^1-4]/g, '');
+  const offsetVal = parseInt($('colorOffset').value) || 0;
+  const link = document.createElement('a');
+  link.download = `DCA_View_G45_OS${offsetVal}.png`;
+  link.href = lastRenderedCanvas.toDataURL('image/png');
+  link.click();
+};
+
+// 최초 자동 실행
+render();
+</script>
+</body>
+</html>
