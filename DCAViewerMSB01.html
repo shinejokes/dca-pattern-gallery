@@ -84,8 +84,8 @@
       <h1>DCA Pattern Viewer <span style="font-size:12px; font-weight:normal; color:var(--mut);">| Multiset Rule 45-Digit Edition</span></h1>
       <div class="controls">
         <div class="input-group">
-          <label for="genomeInput">Genome 수치 입력 (45자리 고정: 1~4 숫자만 가능)</label>
-          <input id="genomeInput" type="text" maxlength="45" placeholder="1~4로 구성된 45자리 입력" value="444144314411422112444311211111111111142444444" />
+          <label for="genomeInput">Input Genome (45digits: 1~4)</label>
+          <input id="genomeInput" type="text" maxlength="45" placeholder="Input 45 digits of 1~4" value="444144314411422112444311211111111111142444444" />
           <div id="validationMsg" class="validation-msg"></div>
         </div>
         
@@ -127,10 +127,10 @@
         <div class="input-group" style="margin-top: 10px;">
           <label>Image Size (Zoom)</label>
           <select id="zoomSelect" style="width:100%; font-weight:bold; padding:8px;">
-            <option value="fit" selected>Fit Screen (자동 맞춤)</option>
+            <option value="fit" selected>Fit Screen (Auto Fitted)</option>
             <option value="0.5">50%</option>
             <option value="0.75">75%</option>
-            <option value="1.0">100% (원본 크기)</option>
+            <option value="1.0">100% (original size)</option>
             <option value="1.5">150%</option>
             <option value="2.0">200%</option>
           </select>
@@ -214,12 +214,12 @@ function parseGenomeInput() {
   
   if (raw.length === 45) {
     msgEl.className = "validation-msg success";
-    msgEl.textContent = "✔ 45자리 Multiset Genome이 정상적으로 구성되었습니다.";
+    msgEl.textContent = "✔ 45 digits Multiset Genome is completed";
     $('statFormat').textContent = "Multiset (45-Digit)";
     return raw.split('').map(Number);
   } else {
     msgEl.className = "validation-msg error";
-    msgEl.textContent = `⚠ 45자리가 필요합니다. (현재 입력된 숫자: ${raw.length}개)`;
+    msgEl.textContent = `⚠ 45digits required. (Currently: ${raw.length}digits)`;
     $('statFormat').textContent = "Incomplete";
     return null;
   }
@@ -324,7 +324,7 @@ function buildHiResColorCanvas(genome, seedStr, paletteName, mappingMode, offset
 function render() {
   const g = parseGenomeInput();
   if(!g) {
-    $('canvasContainer').innerHTML = "<span style='color:#ef4444; font-weight:bold;'>수정창을 확인해 주시게. 45자리의 '1~4' 숫자가 필요하네.</span>";
+    $('canvasContainer').innerHTML = "<span style='color:#ef4444; font-weight:bold;'>Check the correction window. 45 digits of '1~4' required.</span>";
     $('statRAC').textContent = "-";
     $('statStates').textContent = "-";
     return;
