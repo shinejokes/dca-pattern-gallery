@@ -38,10 +38,10 @@
     .thumb { display: block; width: 100%; aspect-ratio: 1/1; image-rendering: auto; border-bottom: 1px solid #f1f5f9; }
     
     .lightbox { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
-    .lightbox .panel { background: #fff; width: 95vw; height: 90vh; max-width: 1400px; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); min-height: 0; }
+    .lightbox .panel { background: #fff; width: 95vw; height: 90vh; max-width: 1400px; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); min-height: 0; position: relative; }
     .lightbox header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #eee; flex-shrink: 0; background: #fff; flex-wrap: wrap; gap: 8px; }
-    .lightbox .body { background: #222; flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 20px; min-height: 0; }
-    .lightbox .body canvas { box-shadow: 0 0 25px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    .lightbox .body { background: #111; flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 0; min-height: 0; position: relative; touch-action: none; }
+    .lightbox .body canvas { box-shadow: 0 0 25px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; transform-origin: center center; transition: transform 0.05s ease-out; }
     .lightbox footer { padding: 15px 20px; border-top: 1px solid #eee; background: #fff; flex-shrink: 0; }
 
     /* Help Button & Modal Styles */
@@ -125,7 +125,6 @@
         padding: 8px 10px;
       }
 
-      /* 폰트 자동 확대 방지를 위한 font-size: 16px 지정 */
       input[type=text], select {
         font-size: 16px !important;
         height: 38px;
@@ -141,7 +140,6 @@
         width: auto;
       }
 
-      /* Caption & 액션 버튼그룹 모바일 전용 수직/수평 정렬 */
       .action-buttons {
         display: flex;
         gap: 8px;
@@ -158,6 +156,52 @@
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 10px;
         padding: 10px 0;
+      }
+
+      /* 모바일전용 Preview 라이트박스 꽉 찬 화면 구현 */
+      .lightbox {
+        padding: 0;
+      }
+      .lightbox .panel {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        background: #000;
+      }
+      .lightbox header {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 1001;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      #lbTitle, .lightbox header label, #lbZoomSelect {
+        display: none !important;
+      }
+      .lightbox header div {
+        gap: 8px !important;
+      }
+      #lbSave, #lbClose {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        border-radius: 20px;
+        padding: 8px 16px !important;
+        font-size: 14px !important;
+      }
+      .lightbox footer {
+        display: none !important;
+      }
+      .lightbox .body {
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+      .lightbox .body canvas {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain;
       }
     }
   </style>
@@ -453,6 +497,62 @@ function applyZoom() {
 }
 $('lbZoomSelect').addEventListener('change', applyZoom);
 
+/* ==========================================
+   📱 모바일 핀치 줌 & 드래그 제스처 구현
+   ========================================== */
+let currentScale = 1, currentX = 0, currentY = 0;
+let startDistance = 0, initialScale = 1;
+let isDragging = false, startX = 0, startY = 0;
+
+function resetTransform(canvas) {
+  currentScale = 1; currentX = 0; currentY = 0;
+  if(canvas) canvas.style.transform = `translate(0px, 0px) scale(1)`;
+}
+
+function initTouchEvents(bodyEl, canvasEl) {
+  resetTransform(canvasEl);
+
+  bodyEl.ontouchstart = function(e) {
+    if (e.touches.length === 2) {
+      isDragging = false;
+      startDistance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialScale = currentScale;
+    } else if (e.touches.length === 1 && currentScale > 1) {
+      isDragging = true;
+      startX = e.touches[0].clientX - currentX;
+      startY = e.touches[0].clientY - currentY;
+    }
+  };
+
+  bodyEl.ontouchmove = function(e) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (startDistance > 0) {
+        currentScale = Math.min(Math.max(1, initialScale * (dist / startDistance)), 5);
+        if (currentScale === 1) { currentX = 0; currentY = 0; }
+        canvasEl.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+      }
+    } else if (e.touches.length === 1 && isDragging) {
+      e.preventDefault();
+      currentX = e.touches[0].clientX - startX;
+      currentY = e.touches[0].clientY - startY;
+      canvasEl.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+    }
+  };
+
+  bodyEl.ontouchend = function(e) {
+    if (e.touches.length < 2) startDistance = 0;
+    if (e.touches.length === 0) isDragging = false;
+  };
+}
+
 async function openPreview(code,g,seedStr){ 
   const previewT = parseInt($('previewTInput').value) || 10;
   const offsetVal = parseInt($('colorOffset').value) || 0;
@@ -461,6 +561,10 @@ async function openPreview(code,g,seedStr){
   $('lbTitle').textContent=`DCA Palette View: ${code} (Offset: ${offsetVal})`; $('lbInfo').textContent=g.join(''); 
   $('lightbox').style.display='flex'; 
   $('lbZoomSelect').value = 'fit'; applyZoom();
+
+  // 모바일 터치 제스처 초기화
+  initTouchEvents($('lbBody'), res.canvas);
+
   $('lbSave').onclick=async()=>{ const ok=await saveCanvas(res.canvas,`DCA_P_${code}_OS${offsetVal}.png`); if(ok&&dirHandle) showToast('Saved!'); }; 
 }
 

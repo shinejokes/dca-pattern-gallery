@@ -6,27 +6,27 @@
   <title>DCA Harvester v1.0 - 16-Group Offset & Hash Edition</title>
   <style>
     :root{--fg:#111;--bg:#fff;--brand:#2563eb;--mut:#64748b;--success:#059669;--error:#ef4444;--accent:#7c3aed}
-    *{box-sizing:border-box}
+    *, *::before, *::after { box-sizing: border-box; }
     html, body { overflow-x: hidden; width: 100%; margin: 0; background: #f8fafc; color: var(--fg); font: 14px/1.5 system-ui, sans-serif; }
     header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 15px 0; position: sticky; top: 0; z-index: 100; }
-    .wrap { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 0 20px; width: 100%; }
     h1 { font-size: 20px; margin: 0; color: var(--brand); font-weight: 800; }
     
     /* 4개 줄 레이아웃 구조 */
-    .controls { display: flex; flex-direction: column; gap: 10px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 10px; }
+    .controls { display: flex; flex-direction: column; gap: 10px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; }
     .control-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%; }
     .control-row.space-between { justify-content: space-between; }
     
-    input[type=text], select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background:#fff; }
-    input[type=number] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 65px; text-align: center; }
-    #code { width: 260px; font-family: ui-monospace; text-transform: uppercase; font-size: 15px; font-weight: bold; border: 2px solid var(--brand); } 
-    .range-box { display:flex; align-items:center; gap:6px; background:#f1f5f9; padding:6px 12px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; font-weight:bold; }
-    .select-box { display:flex; align-items:center; gap:8px; background:#f1f5f9; padding:6px 12px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; font-weight:bold; color:#475569; }
-    .select-box select { min-width:130px; padding:6px; font-weight:600; color:#111; }
-    #legend { display:flex; gap:4px; align-items:center; min-height:24px; }
+    input[type=text], select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background:#fff; max-width: 100%; }
+    input[type=number] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 65px; text-align: center; max-width: 100%; }
+    #code { width: 220px; max-width: 100%; font-family: ui-monospace; text-transform: uppercase; font-size: 15px; font-weight: bold; border: 2px solid var(--brand); } 
+    .range-box { display:flex; align-items:center; gap:6px; background:#f1f5f9; padding:6px 12px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; font-weight:bold; flex-wrap: wrap; max-width: 100%; }
+    .select-box { display:flex; align-items:center; gap:8px; background:#f1f5f9; padding:6px 12px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; font-weight:bold; color:#475569; flex-wrap: wrap; max-width: 100%; }
+    .select-box select { min-width:130px; padding:6px; font-weight:600; color:#111; max-width: 100%; }
+    #legend { display:flex; gap:4px; align-items:center; min-height:24px; flex-wrap: wrap; }
     .swatch { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,.18); }
     
-    button { padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    button { padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s; white-space: nowrap; }
     button:hover:not(:disabled) { background: #f1f5f9; }
     button:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; cursor: not-allowed; }
     button.primary { background: var(--brand); color: #fff; border: none; }
@@ -39,7 +39,7 @@
     
     .lightbox { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
     .lightbox .panel { background: #fff; width: 95vw; height: 90vh; max-width: 1400px; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); min-height: 0; }
-    .lightbox header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #eee; flex-shrink: 0; background: #fff; }
+    .lightbox header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #eee; flex-shrink: 0; background: #fff; flex-wrap: wrap; gap: 8px; }
     .lightbox .body { background: #222; flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 20px; min-height: 0; }
     .lightbox .body canvas { box-shadow: 0 0 25px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
     .lightbox footer { padding: 15px 20px; border-top: 1px solid #eee; background: #fff; flex-shrink: 0; }
@@ -104,6 +104,62 @@
     .dca-help-footer { text-align: right; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px; }
     .btn-help-close-action { background: #00bcd4; color: #000; border: none; padding: 8px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
     .btn-help-close-action:hover { background: #00acc1; color: #fff; }
+
+    /* ==========================================
+       📱 모바일 최적화 미디어 쿼리 (768px 이하)
+       ========================================== */
+    @media (max-width: 768px) {
+      .wrap { padding: 0 10px; }
+      header { padding: 10px 0; }
+      .controls { padding: 10px; gap: 8px; }
+
+      .control-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .range-box, .select-box {
+        width: 100%;
+        justify-content: space-between;
+        padding: 8px 10px;
+      }
+
+      /* 폰트 자동 확대 방지를 위한 font-size: 16px 지정 */
+      input[type=text], select {
+        font-size: 16px !important;
+        height: 38px;
+      }
+      
+      #code {
+        flex: 1;
+        width: 100% !important;
+      }
+
+      .select-box select {
+        flex: 1;
+        width: auto;
+      }
+
+      /* Caption & 액션 버튼그룹 모바일 전용 수직/수평 정렬 */
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .action-buttons button {
+        flex: 1;
+        padding: 10px 0;
+        font-size: 14px;
+      }
+
+      #grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        padding: 10px 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -112,62 +168,66 @@
       <div class="controls">
         
         <!-- Row 1: Title & Help -->
-        <div class="control-row space-between">
+        <div class="control-row space-between" style="flex-direction: row; align-items: center;">
           <h1>DCA Harvester 1.0 <span style="font-size:12px; font-weight:normal; color:var(--mut);">| July 2026 </span></h1>
           <button id="btnHelp" class="btn-help" onclick="toggleHelpModal()">? Help</button>
         </div>
 
         <!-- Row 2: Genome, Seed, RAC, Preview Time -->
         <div class="control-row">
-          <div class="range-box">
-            Genome: 
+          <div class="range-box" style="flex: 2;">
+            <span>Genome:</span> 
             <input id="code" type="text" maxlength="20" placeholder="20-Letter Code" />
             <button id="btnWild" class="success">Random</button>
           </div>
           <div class="range-box">
-            Seed: 
-            <input id="seedInput" type="text" maxlength="4" value="1122" style="width:50px; text-align:center; font-weight:bold;" />
+            <span>Seed:</span> 
+            <input id="seedInput" type="text" maxlength="4" value="1122" style="width:60px; text-align:center; font-weight:bold;" />
           </div>
           <div class="range-box">
-            RAC: 
-            <input id="minGenome" type="number" value="20" /> ~ <input id="maxGenome" type="number" value="45" />
+            <span>RAC:</span> 
+            <div style="display:flex; align-items:center; gap:4px;">
+              <input id="minGenome" type="number" value="20" /> ~ <input id="maxGenome" type="number" value="45" />
+            </div>
           </div>
           <div class="range-box">
-            Preview Time: 
+            <span>Preview Time:</span> 
             <input id="previewTInput" type="number" value="10" min="7" max="13" style="width:50px; text-align:center; font-weight:bold;" />
           </div>
         </div>
 
         <!-- Row 3: Color Scheme, Palette, Color Offset -->
         <div class="control-row">
-          <div class="select-box">
-            Color Scheme
+          <div class="select-box" style="flex: 1.5;">
+            <span>Color Scheme</span>
             <select id="mappingMode">
               <option value="history16" selected>16-Group History (Hash + Offset)</option>
               <option value="last">Final face color only</option>
             </select>
           </div>
-          <div class="select-box">
-            Palette
+          <div class="select-box" style="flex: 1.5;">
+            <span>Palette</span>
             <select id="paletteName"></select>
             <div id="legend"></div>
           </div>
           <div class="range-box">
-            Color Offset: 
+            <span>Color Offset:</span> 
             <input id="colorOffset" type="number" value="0" min="0" max="999" style="width:55px;" />
           </div>
         </div>
 
         <!-- Row 4: Caption & Action Buttons -->
         <div class="control-row">
-          <div class="range-box" style="flex: 1; min-width: 300px;">
-            Caption: 
-            <input id="nameInput" type="text" value="DCA harvester" maxlength="40" placeholder="Caption" style="width:100%; font-weight:bold;" />
+          <div class="range-box" style="flex: 1; min-width: 250px;">
+            <span>Caption:</span> 
+            <input id="nameInput" type="text" value="DCA harvester" maxlength="40" placeholder="Caption" style="flex:1; width:100%; font-weight:bold;" />
           </div>
-          <button id="btnFolder" style="background:#7c3aed; color:#fff; border:none;">📁 Folder</button>
-          <span id="folderLabel" style="font-size:12px; color:var(--mut);"></span>
-          <button id="btnGen" class="primary" disabled>Harvest</button>
-          <button id="btnStop" class="stop" disabled>Stop</button>
+          <div class="action-buttons">
+            <button id="btnFolder" style="background:#7c3aed; color:#fff; border:none;">📁 Folder</button>
+            <button id="btnGen" class="primary" disabled>Harvest</button>
+            <button id="btnStop" class="stop" disabled>Stop</button>
+          </div>
+          <span id="folderLabel" style="font-size:12px; color:var(--mut); width: 100%;"></span>
         </div>
 
       </div>
@@ -224,7 +284,7 @@
     <div class="panel">
       <header>
         <strong id="lbTitle">DCA Preview</strong>
-        <div style="gap:12px; display:flex; align-items:center;">
+        <div style="gap:12px; display:flex; align-items:center; flex-wrap:wrap;">
           <label style="font-size:12px; font-weight:bold; color:#475569;">Image Size:</label>
           <select id="lbZoomSelect" style="padding:4px 8px; font-size:12px; font-weight:bold;">
             <option value="fit" selected>Fit Screen (자동 맞춤)</option>
