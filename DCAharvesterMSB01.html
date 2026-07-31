@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>DCA Harvester v1.0 - 16-Group Offset & Hash Edition</title>
+  <title>DCA Harvester v1.0 - Fullscreen Preview Edition</title>
   <style>
     :root{--fg:#111;--bg:#fff;--brand:#2563eb;--mut:#64748b;--success:#059669;--error:#ef4444;--accent:#7c3aed}
     *, *::before, *::after { box-sizing: border-box; }
@@ -12,7 +12,6 @@
     .wrap { max-width: 1400px; margin: 0 auto; padding: 0 20px; width: 100%; }
     h1 { font-size: 20px; margin: 0; color: var(--brand); font-weight: 800; }
     
-    /* 4개 줄 레이아웃 구조 */
     .controls { display: flex; flex-direction: column; gap: 10px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; }
     .control-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; width: 100%; }
     .control-row.space-between { justify-content: space-between; }
@@ -37,172 +36,88 @@
     .card { border: 1px solid #e2e8f0; background: #fff; display: flex; flex-direction: column; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .thumb { display: block; width: 100%; aspect-ratio: 1/1; image-rendering: auto; border-bottom: 1px solid #f1f5f9; }
     
-    .lightbox { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
-    .lightbox .panel { background: #fff; width: 95vw; height: 90vh; max-width: 1400px; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); min-height: 0; position: relative; }
-    .lightbox header { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid #eee; flex-shrink: 0; background: #fff; flex-wrap: wrap; gap: 8px; }
-    .lightbox .body { background: #111; flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 0; min-height: 0; position: relative; touch-action: none; }
-    .lightbox .body canvas { box-shadow: 0 0 25px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; transform-origin: center center; transition: transform 0.05s ease-out; }
-    .lightbox footer { padding: 15px 20px; border-top: 1px solid #eee; background: #fff; flex-shrink: 0; }
+    /* ==========================================
+       📱 & 💻 전체화면 꽉 찬 Preview 라이트박스
+       ========================================== */
+    .lightbox { 
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+      background: #000; display: none; align-items: center; justify-content: center; 
+      z-index: 10000; padding: 0; margin: 0; overflow: hidden;
+    }
+    .lightbox .panel { 
+      background: #000; width: 100vw; height: 100vh; 
+      display: flex; flex-direction: column; border-radius: 0; overflow: hidden; 
+      position: relative; margin: 0; padding: 0;
+    }
+    
+    /* 우측 상단 floating 버튼 그룹 (최상단 레이어 지정) */
+    .lightbox .nav-controls {
+      position: absolute; top: 20px; right: 25px; z-index: 10005;
+      display: flex; gap: 10px; align-items: center;
+      pointer-events: auto;
+    }
+    .lightbox .nav-controls button {
+      box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+      border-radius: 20px; padding: 10px 22px; font-size: 14px; font-weight: bold;
+      border: none; cursor: pointer; transition: transform 0.1s ease, background-color 0.2s;
+    }
+    .lightbox .nav-controls button:active { transform: scale(0.92); }
+    #lbSave { background: var(--brand); color: #fff; }
+    #lbSave:hover { background: #1d4ed8; }
+    #lbClose { background: rgba(255, 255, 255, 0.9); color: #000; }
+    #lbClose:hover { background: #ffffff; }
+
+    .lightbox .body { 
+      width: 100vw; height: 100vh; background: #000; 
+      overflow: hidden; display: flex; align-items: center; justify-content: center; 
+      position: relative; touch-action: none; cursor: grab;
+    }
+    .lightbox .body:active { cursor: grabbing; }
+    
+    .lightbox .body canvas { 
+      max-width: 100%; max-height: 100%; width: auto; height: auto; 
+      object-fit: contain; display: block; 
+      transform-origin: center center; transition: transform 0.05s ease-out; 
+      user-select: none; -webkit-user-drag: none;
+    }
 
     /* Help Button & Modal Styles */
     .btn-help { background-color: #00bcd4; color: #000; border: none; font-weight: bold; }
     .btn-help:hover:not(:disabled) { background-color: #00acc1; color: #fff; }
 
     .dca-help-modal {
-        display: none;
-        position: fixed;
-        z-index: 20000;
-        left: 0; top: 0;
-        width: 100vw; height: 100vh;
-        background-color: rgba(0, 0, 0, 0.75);
-        backdrop-filter: blur(4px);
-        align-items: center;
-        justify-content: center;
+        display: none; position: fixed; z-index: 20000; left: 0; top: 0;
+        width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px); align-items: center; justify-content: center;
     }
-
     .dca-help-content {
-        background-color: #1e293b;
-        color: #f8fafc;
-        width: 90%;
-        max-width: 580px;
-        max-height: 85vh;
-        border: 1px solid #00bcd4;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        position: relative;
-        overflow-y: auto;
-        text-align: left;
+        background-color: #1e293b; color: #f8fafc; width: 90%; max-width: 580px; max-height: 85vh;
+        border: 1px solid #00bcd4; border-radius: 12px; padding: 25px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        position: relative; overflow-y: auto; text-align: left;
     }
-
-    .dca-help-close {
-        position: absolute;
-        top: 15px; right: 20px;
-        font-size: 28px;
-        font-weight: bold;
-        color: #94a3b8;
-        cursor: pointer;
-    }
+    .dca-help-close { position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; color: #94a3b8; cursor: pointer; }
     .dca-help-close:hover { color: #00bcd4; }
-
-    .dca-help-title {
-        color: #00bcd4;
-        margin-top: 0;
-        margin-bottom: 15px;
-        font-size: 1.3rem;
-        border-bottom: 1px solid #334155;
-        padding-bottom: 10px;
-        text-transform: uppercase;
-        font-weight: bold;
-    }
-
+    .dca-help-title { color: #00bcd4; margin-top: 0; margin-bottom: 15px; font-size: 1.3rem; border-bottom: 1px solid #334155; padding-bottom: 10px; text-transform: uppercase; font-weight: bold; }
     .help-section { margin-bottom: 18px; }
     .help-section h3 { font-size: 1rem; color: #ffffff; margin-bottom: 6px; }
     .help-section p { margin: 4px 0; font-size: 0.88rem; color: #cbd5e1; line-height: 1.5; }
     .help-section code { background: #0f172a; color: #00bcd4; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-
     .dca-help-footer { text-align: right; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px; }
     .btn-help-close-action { background: #00bcd4; color: #000; border: none; padding: 8px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
     .btn-help-close-action:hover { background: #00acc1; color: #fff; }
 
-    /* ==========================================
-       📱 모바일 최적화 미디어 쿼리 (768px 이하)
-       ========================================== */
     @media (max-width: 768px) {
       .wrap { padding: 0 10px; }
       header { padding: 10px 0; }
       .controls { padding: 10px; gap: 8px; }
-
-      .control-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-      }
-
-      .range-box, .select-box {
-        width: 100%;
-        justify-content: space-between;
-        padding: 8px 10px;
-      }
-
-      input[type=text], select {
-        font-size: 16px !important;
-        height: 38px;
-      }
-      
-      #code {
-        flex: 1;
-        width: 100% !important;
-      }
-
-      .select-box select {
-        flex: 1;
-        width: auto;
-      }
-
-      .action-buttons {
-        display: flex;
-        gap: 8px;
-        width: 100%;
-      }
-
-      .action-buttons button {
-        flex: 1;
-        padding: 10px 0;
-        font-size: 14px;
-      }
-
-      #grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 10px;
-        padding: 10px 0;
-      }
-
-      /* 모바일전용 Preview 라이트박스 꽉 찬 화면 구현 */
-      .lightbox {
-        padding: 0;
-      }
-      .lightbox .panel {
-        width: 100vw;
-        height: 100vh;
-        border-radius: 0;
-        background: #000;
-      }
-      .lightbox header {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 1001;
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-      }
-      #lbTitle, .lightbox header label, #lbZoomSelect {
-        display: none !important;
-      }
-      .lightbox header div {
-        gap: 8px !important;
-      }
-      #lbSave, #lbClose {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        border-radius: 20px;
-        padding: 8px 16px !important;
-        font-size: 14px !important;
-      }
-      .lightbox footer {
-        display: none !important;
-      }
-      .lightbox .body {
-        width: 100%;
-        height: 100%;
-        background: #000;
-      }
-      .lightbox .body canvas {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: contain;
-      }
+      .control-row { flex-direction: column; align-items: stretch; gap: 8px; }
+      .range-box, .select-box { width: 100%; justify-content: space-between; padding: 8px 10px; }
+      input[type=text], select { font-size: 16px !important; height: 38px; }
+      #code { flex: 1; width: 100% !important; }
+      .select-box select { flex: 1; width: auto; }
+      .action-buttons { display: flex; gap: 8px; width: 100%; }
+      .action-buttons button { flex: 1; padding: 10px 0; font-size: 14px; }
+      #grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 10px 0; }
     }
   </style>
 </head>
@@ -221,7 +136,7 @@
         <div class="control-row">
           <div class="range-box" style="flex: 2;">
             <span>Genome:</span> 
-            <input id="code" type="text" maxlength="20" placeholder="20-Letter Code" />
+            <input id="code" type="text" maxlength="30" placeholder="20-Letter Code" />
             <button id="btnWild" class="success">Random</button>
           </div>
           <div class="range-box">
@@ -289,26 +204,25 @@
               <div class="help-section">
                   <h3>1. Genome & Wildcard Control</h3>
                   <p>• Input a <strong>20-letter text sequence</strong> to calculate the specific genome parameters.</p>
-                  <p>• Use <code>*</code> as a <strong>wildcard character </strong> anywhere in the 20-letter code to search and generate patterns across multiple rule variations continuously.
-                  (e.g. ASBSNCDDCSSCCXVCCD*** )</p>
+                  <p>• Use <code>*</code> as a <strong>wildcard character </strong> anywhere in the 20-letter code to search and generate patterns across multiple rule variations continuously.</p>
               </div>
 
               <div class="help-section">
                   <h3>2. RAC (Rules Active Count) Range</h3>
                   <p>• Defines the range of active rules applied out of the total rule set (up to 45 rules).</p>
-                  <p>• <strong>Higher RAC values</strong> generally produce more intricate, highly complex patterns and a larger diversity of dynamic outputs.</p>
+                  <p>• <strong>Higher RAC values</strong> generally produce more intricate, highly complex patterns.</p>
               </div>
 
               <div class="help-section">
                   <h3>3. Initial Seed & Palette Settings</h3>
                   <p>• <strong>Seed:</strong> Sets the 4 initial node values (e.g., <code>1122</code>) of the starting seed cell.</p>
-                  <p>• <strong>Palette & Color Offset:</strong> Choose color palettes and adjust the color offset value to cycle through color mappings dynamically.</p>
+                  <p>• <strong>Palette & Color Offset:</strong> Choose color palettes and adjust the color offset value.</p>
               </div>
 
               <div class="help-section">
                   <h3>4. Caption & Output Customization</h3>
-                  <p>• <strong>Caption:</strong> Custom title or author text rendered at the bottom of generated high-resolution images.</p>
-                  <p>• <strong>Preview Time:</strong> Sets the division time-step depth for preview rendering (e.g., <code>10</code> for 1024x1024 grid).</p>
+                  <p>• <strong>Caption:</strong> Custom title or author text rendered at the bottom of generated images.</p>
+                  <p>• <strong>Preview Time:</strong> Sets the division time-step depth for preview rendering.</p>
               </div>
 
               <div class="help-section">
@@ -324,28 +238,18 @@
       </div>
   </div>
   
+  <!-- 전체화면 Fullscreen Lightbox -->
   <div id="lightbox" class="lightbox">
     <div class="panel">
-      <header>
-        <strong id="lbTitle">DCA Preview</strong>
-        <div style="gap:12px; display:flex; align-items:center; flex-wrap:wrap;">
-          <label style="font-size:12px; font-weight:bold; color:#475569;">Image Size:</label>
-          <select id="lbZoomSelect" style="padding:4px 8px; font-size:12px; font-weight:bold;">
-            <option value="fit" selected>Fit Screen (자동 맞춤)</option>
-            <option value="0.5">50%</option>
-            <option value="0.75">75%</option>
-            <option value="1.0">100% (원본 크기)</option>
-            <option value="1.5">150%</option>
-            <option value="2.0">200%</option>
-          </select>
-          <button id="lbSave" style="background:var(--brand); color:#fff; padding:6px 14px;">Save</button>
-          <button id="lbClose" style="padding:6px 14px;">Close</button>
-        </div>
-      </header>
+      <!-- 우측 상단 Floating Save & Close 버튼 -->
+      <div class="nav-controls">
+        <button id="lbSave">Save</button>
+        <button id="lbClose">Close</button>
+      </div>
       <div class="body" id="lbBody"></div>
-      <footer style="padding:15px; border-top:1px solid #eee; background:#fff;"><div id="lbInfo" style="font-family:ui-monospace; font-size:11px; color:var(--brand); word-break:break-all;"></div></footer>
     </div>
   </div>
+
 <script>
 var $ = function(id) { return document.getElementById(id); };
 let dirHandle = null, stopFlag = false;
@@ -481,37 +385,28 @@ function buildHiResColorCanvas(genome, code, seedStr, paletteName, mappingMode, 
 
 async function saveCanvas(canvas, filename){ if(dirHandle){ try{ const fileHandle=await dirHandle.getFileHandle(filename,{create:true}); const writable=await fileHandle.createWritable(); const blob=await new Promise(res=>canvas.toBlob(res,'image/png')); await writable.write(blob); await writable.close(); return true; }catch(e){ console.error(e); return false; } } else { const link=document.createElement('a'); link.download=filename; link.href=canvas.toDataURL(); link.click(); return true; } }
 
-function applyZoom() {
-  const canvas = document.querySelector('.lightbox .body canvas');
-  if(!canvas) return;
-  const val = $('lbZoomSelect').value;
-  if(val === 'fit') {
-    canvas.style.maxWidth = '100%'; canvas.style.maxHeight = '100%';
-    canvas.style.width = 'auto'; canvas.style.height = 'auto';
-  } else {
-    const scale = parseFloat(val);
-    canvas.style.maxWidth = 'none'; canvas.style.maxHeight = 'none';
-    canvas.style.width = (canvas.width * scale) + 'px';
-    canvas.style.height = (canvas.height * scale) + 'px';
-  }
-}
-$('lbZoomSelect').addEventListener('change', applyZoom);
-
 /* ==========================================
-   📱 모바일 핀치 줌 & 드래그 제스처 구현
+   🔍 확대/축소(Zoom In/Out) & 드래그 인터랙션
    ========================================== */
 let currentScale = 1, currentX = 0, currentY = 0;
 let startDistance = 0, initialScale = 1;
 let isDragging = false, startX = 0, startY = 0;
 
-function resetTransform(canvas) {
-  currentScale = 1; currentX = 0; currentY = 0;
-  if(canvas) canvas.style.transform = `translate(0px, 0px) scale(1)`;
+function updateTransform(canvasEl) {
+  if (canvasEl) {
+    canvasEl.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+  }
 }
 
-function initTouchEvents(bodyEl, canvasEl) {
+function resetTransform(canvas) {
+  currentScale = 1; currentX = 0; currentY = 0;
+  updateTransform(canvas);
+}
+
+function initInteractiveEvents(bodyEl, canvasEl) {
   resetTransform(canvasEl);
 
+  // 1. 모바일 터치 제스처 (핀치 줌 & 1손가락 이동)
   bodyEl.ontouchstart = function(e) {
     if (e.touches.length === 2) {
       isDragging = false;
@@ -520,7 +415,7 @@ function initTouchEvents(bodyEl, canvasEl) {
         e.touches[0].clientY - e.touches[1].clientY
       );
       initialScale = currentScale;
-    } else if (e.touches.length === 1 && currentScale > 1) {
+    } else if (e.touches.length === 1) {
       isDragging = true;
       startX = e.touches[0].clientX - currentX;
       startY = e.touches[0].clientY - currentY;
@@ -535,21 +430,54 @@ function initTouchEvents(bodyEl, canvasEl) {
         e.touches[0].clientY - e.touches[1].clientY
       );
       if (startDistance > 0) {
-        currentScale = Math.min(Math.max(1, initialScale * (dist / startDistance)), 5);
-        if (currentScale === 1) { currentX = 0; currentY = 0; }
-        canvasEl.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+        currentScale = Math.min(Math.max(0.3, initialScale * (dist / startDistance)), 10);
+        updateTransform(canvasEl);
       }
     } else if (e.touches.length === 1 && isDragging) {
       e.preventDefault();
       currentX = e.touches[0].clientX - startX;
       currentY = e.touches[0].clientY - startY;
-      canvasEl.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+      updateTransform(canvasEl);
     }
   };
 
   bodyEl.ontouchend = function(e) {
     if (e.touches.length < 2) startDistance = 0;
     if (e.touches.length === 0) isDragging = false;
+  };
+
+  // 2. PC 마우스 휠 (확대 및 0.3x 축소까지 허용)
+  bodyEl.onwheel = function(e) {
+    e.preventDefault();
+    const zoomDelta = e.deltaY < 0 ? 1.12 : 0.88;
+    currentScale = Math.min(Math.max(0.3, currentScale * zoomDelta), 10);
+    
+    // 100% 이하로 작아지면 위치를 자동으로 중앙 정렬
+    if (currentScale <= 1.0) {
+      currentX = 0;
+      currentY = 0;
+    }
+    updateTransform(canvasEl);
+  };
+
+  // 3. PC 마우스 드래그 (이동)
+  bodyEl.onmousedown = function(e) {
+    if (e.button !== 0) return;
+    isDragging = true;
+    startX = e.clientX - currentX;
+    startY = e.clientY - startY;
+  };
+
+  window.onmousemove = function(e) {
+    if (isDragging) {
+      currentX = e.clientX - startX;
+      currentY = e.clientY - startY;
+      updateTransform(canvasEl);
+    }
+  };
+
+  window.onmouseup = function() {
+    isDragging = false;
   };
 }
 
@@ -558,14 +486,22 @@ async function openPreview(code,g,seedStr){
   const offsetVal = parseInt($('colorOffset').value) || 0;
   const res=buildHiResColorCanvas(g,code,seedStr,$('paletteName').value,$('mappingMode').value,offsetVal,previewT); 
   $('lbBody').innerHTML=''; $('lbBody').appendChild(res.canvas); 
-  $('lbTitle').textContent=`DCA Palette View: ${code} (Offset: ${offsetVal})`; $('lbInfo').textContent=g.join(''); 
   $('lightbox').style.display='flex'; 
-  $('lbZoomSelect').value = 'fit'; applyZoom();
 
-  // 모바일 터치 제스처 초기화
-  initTouchEvents($('lbBody'), res.canvas);
+  // 제스처 및 마우스 인터랙션 등록
+  initInteractiveEvents($('lbBody'), res.canvas);
 
-  $('lbSave').onclick=async()=>{ const ok=await saveCanvas(res.canvas,`DCA_P_${code}_OS${offsetVal}.png`); if(ok&&dirHandle) showToast('Saved!'); }; 
+  // 버튼 이벤트 연결 (이벤트 전파 중단 추가)
+  $('lbSave').onclick = async (e) => {
+    e.stopPropagation();
+    const ok = await saveCanvas(res.canvas, `DCA_P_${code}_OS${offsetVal}.png`);
+    if (ok && dirHandle) showToast('Saved!');
+  };
+
+  $('lbClose').onclick = (e) => {
+    e.stopPropagation();
+    $('lightbox').style.display = 'none';
+  };
 }
 
 function showToast(msg){ let t=document.createElement('div'); t.innerHTML=msg; t.style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:10px 25px; border-radius:30px; z-index:100000; font-size:13px;"; document.body.appendChild(t); setTimeout(()=>{t.style.opacity='0'; setTimeout(()=>t.remove(),500);},1500); }
@@ -593,7 +529,6 @@ $('btnGen').onclick=function(){
 };
 $('btnWild').onclick=function(){ let r=''; for(let i=0;i<20;i++) r+=String.fromCharCode(65+Math.floor(Math.random()*26)); $('code').value=r; $('btnGen').disabled=false; $('btnGen').click(); };
 $('btnStop').onclick=function(){ stopFlag=true; };
-$('lbClose').onclick=function(){ $('lightbox').style.display='none'; };
 $('btnFolder').onclick=async function(){ try{ dirHandle=await window.showDirectoryPicker(); $('folderLabel').textContent=`Folder: ${dirHandle.name}`; }catch(e){} };
 $('code').oninput=function(){ this.value=this.value.toUpperCase(); $('btnGen').disabled=!/^[A-Z*]{20}$/.test(this.value); };
 </script>
