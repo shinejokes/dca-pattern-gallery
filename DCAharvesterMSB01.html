@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>DCA Harvester v1.0 - Fullscreen Preview Edition</title>
+  <title>DCA Harvester v1.0 - Texture Edition</title>
   <style>
     :root{--fg:#111;--bg:#fff;--brand:#2563eb;--mut:#64748b;--success:#059669;--error:#ef4444;--accent:#7c3aed}
     *, *::before, *::after { box-sizing: border-box; }
@@ -17,11 +17,13 @@
     .control-row.space-between { justify-content: space-between; }
     
     input[type=text], select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background:#fff; max-width: 100%; }
-    input[type=number] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; width: 65px; text-align: center; max-width: 100%; }
-    #code { width: 220px; max-width: 100%; font-family: ui-monospace; text-transform: uppercase; font-size: 15px; font-weight: bold; border: 2px solid var(--brand); } 
+    
+    /* Genome 입력 창 */
+    #code { width: 320px; font-family: ui-monospace; text-transform: uppercase; font-size: 15px; font-weight: bold; border: 2px solid var(--brand); letter-spacing: 1px; } 
+    
     .range-box { display:flex; align-items:center; gap:6px; background:#f1f5f9; padding:6px 12px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; font-weight:bold; flex-wrap: wrap; max-width: 100%; }
     .select-box { display:flex; align-items:center; gap:8px; background:#f1f5f9; padding:6px 12px; border-radius:8px; border:1px solid #e2e8f0; font-size:12px; font-weight:bold; color:#475569; flex-wrap: wrap; max-width: 100%; }
-    .select-box select { min-width:130px; padding:6px; font-weight:600; color:#111; max-width: 100%; }
+    .select-box select { min-width:120px; padding:6px; font-weight:600; color:#111; max-width: 100%; }
     #legend { display:flex; gap:4px; align-items:center; min-height:24px; flex-wrap: wrap; }
     .swatch { width:16px; height:16px; border-radius:3px; border:1px solid rgba(0,0,0,.18); }
     
@@ -36,9 +38,7 @@
     .card { border: 1px solid #e2e8f0; background: #fff; display: flex; flex-direction: column; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .thumb { display: block; width: 100%; aspect-ratio: 1/1; image-rendering: auto; border-bottom: 1px solid #f1f5f9; }
     
-    /* ==========================================
-       📱 & 💻 전체화면 꽉 찬 Preview 라이트박스
-       ========================================== */
+    /* Lightbox Styles */
     .lightbox { 
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
       background: #000; display: none; align-items: center; justify-content: center; 
@@ -49,8 +49,6 @@
       display: flex; flex-direction: column; border-radius: 0; overflow: hidden; 
       position: relative; margin: 0; padding: 0;
     }
-    
-    /* 우측 상단 floating 버튼 그룹 (최상단 레이어 지정) */
     .lightbox .nav-controls {
       position: absolute; top: 20px; right: 25px; z-index: 10005;
       display: flex; gap: 10px; align-items: center;
@@ -73,7 +71,6 @@
       position: relative; touch-action: none; cursor: grab;
     }
     .lightbox .body:active { cursor: grabbing; }
-    
     .lightbox .body canvas { 
       max-width: 100%; max-height: 100%; width: auto; height: auto; 
       object-fit: contain; display: block; 
@@ -81,7 +78,7 @@
       user-select: none; -webkit-user-drag: none;
     }
 
-    /* Help Button & Modal Styles */
+    /* Help Modal */
     .btn-help { background-color: #00bcd4; color: #000; border: none; font-weight: bold; }
     .btn-help:hover:not(:disabled) { background-color: #00acc1; color: #fff; }
 
@@ -126,67 +123,59 @@
     <div class="wrap">
       <div class="controls">
         
-        <!-- Row 1: Title & Help -->
+        <!-- Title & Help Button -->
         <div class="control-row space-between" style="flex-direction: row; align-items: center;">
-          <h1>DCA Harvester 1.0 <span style="font-size:12px; font-weight:normal; color:var(--mut);">| July 2026 </span></h1>
+          <h1>DCA Harvester 1.0 <span style="font-size:12px; font-weight:normal; color:var(--mut);">| Texture Edition</span></h1>
           <button id="btnHelp" class="btn-help" onclick="toggleHelpModal()">? Help</button>
         </div>
 
-        <!-- Row 2: Genome, Seed, RAC, Preview Time -->
+        <!-- Row 1: Genome (확장) + Symmetry -->
         <div class="control-row">
-          <div class="range-box" style="flex: 2;">
+          <div class="range-box" style="flex: 1;">
             <span>Genome:</span> 
             <input id="code" type="text" maxlength="30" placeholder="20-Letter Code" />
             <button id="btnWild" class="success">Random</button>
           </div>
-          <div class="range-box">
-            <span>Seed:</span> 
-            <input id="seedInput" type="text" maxlength="4" value="1122" style="width:60px; text-align:center; font-weight:bold;" />
-          </div>
-          <div class="range-box">
-            <span>RAC:</span> 
-            <div style="display:flex; align-items:center; gap:4px;">
-              <input id="minGenome" type="number" value="20" /> ~ <input id="maxGenome" type="number" value="45" />
-            </div>
-          </div>
-          <div class="range-box">
-            <span>Preview Time:</span> 
-            <input id="previewTInput" type="number" value="10" min="7" max="13" style="width:50px; text-align:center; font-weight:bold;" />
+          <div class="select-box">
+            <span>Symmetry:</span>
+            <select id="symmetrySelect">
+              <option value="1111">HV</option>
+              <option value="1122" selected>Horizontal</option>
+              <option value="1221">Vertical</option>
+              <option value="1212">Diagonal</option>
+              <option value="1234">NoSymmetry</option>
+            </select>
           </div>
         </div>
 
-        <!-- Row 3: Color Scheme, Palette, Color Offset -->
+        <!-- Row 2: Image Size + Palette + Caption (확장) -->
         <div class="control-row">
-          <div class="select-box" style="flex: 1.5;">
-            <span>Color Scheme</span>
-            <select id="mappingMode">
-              <option value="history16" selected>16-Group History (Hash + Offset)</option>
-              <option value="last">Final face color only</option>
+          <div class="select-box">
+            <span>Image Size:</span>
+            <select id="imageSizeSelect">
+              <option value="10" selected>1024x1024</option>
+              <option value="11">2048x2048</option>
             </select>
           </div>
-          <div class="select-box" style="flex: 1.5;">
-            <span>Palette</span>
+          <div class="select-box">
+            <span>Palette:</span>
             <select id="paletteName"></select>
             <div id="legend"></div>
           </div>
-          <div class="range-box">
-            <span>Color Offset:</span> 
-            <input id="colorOffset" type="number" value="0" min="0" max="999" style="width:55px;" />
-          </div>
-        </div>
-
-        <!-- Row 4: Caption & Action Buttons -->
-        <div class="control-row">
-          <div class="range-box" style="flex: 1; min-width: 250px;">
+          <div class="range-box" style="flex: 1; min-width: 300px;">
             <span>Caption:</span> 
             <input id="nameInput" type="text" value="DCA harvester" maxlength="40" placeholder="Caption" style="flex:1; width:100%; font-weight:bold;" />
           </div>
-          <div class="action-buttons">
+        </div>
+
+        <!-- Row 3: Action Buttons (Folder, Harvest, Stop) -->
+        <div class="control-row">
+          <div class="action-buttons" style="display: flex; gap: 8px;">
             <button id="btnFolder" style="background:#7c3aed; color:#fff; border:none;">📁 Folder</button>
             <button id="btnGen" class="primary" disabled>Harvest</button>
             <button id="btnStop" class="stop" disabled>Stop</button>
           </div>
-          <span id="folderLabel" style="font-size:12px; color:var(--mut); width: 100%;"></span>
+          <span id="folderLabel" style="font-size:12px; color:var(--mut); margin-left: 10px;"></span>
         </div>
 
       </div>
@@ -195,41 +184,35 @@
   </header>
   <main class="wrap"><section id="grid"></section></main>
 
-  <!-- Help Modal Popup -->
+  <!-- Help Modal Popup (English Only) -->
   <div id="dcaHelpModal" class="dca-help-modal" onclick="if(event.target === this) toggleHelpModal()">
       <div class="dca-help-content">
           <span class="dca-help-close" onclick="toggleHelpModal()">&times;</span>
           <h2 class="dca-help-title">DCA Harvester Guide</h2>
           <div class="dca-help-body">
               <div class="help-section">
-                  <h3>1. Genome & Wildcard Control</h3>
-                  <p>• Input a <strong>20-letter text sequence</strong> to calculate the specific genome parameters.</p>
-                  <p>• Use <code>*</code> as a <strong>wildcard character </strong> anywhere in the 20-letter code to search and generate patterns across multiple rule variations continuously.</p>
+                  <h3>1. Genome & Symmetry Control</h3>
+                  <p>• Input a <strong>20-letter text code</strong> to generate specific pattern rules.</p>
+                  <p>• Use <code>*</code> as a <strong>wildcard character</strong> anywhere in the 20-letter code to search and generate patterns across multiple variations.</p>
+                  <p>• Select initial symmetry configurations: <strong>HV, Horizontal, Vertical, Diagonal, or NoSymmetry</strong>.</p>
               </div>
 
               <div class="help-section">
-                  <h3>2. RAC (Rules Active Count) Range</h3>
-                  <p>• Defines the range of active rules applied out of the total rule set (up to 45 rules).</p>
-                  <p>• <strong>Higher RAC values</strong> generally produce more intricate, highly complex patterns.</p>
+                  <h3>2. Image Size & Palette</h3>
+                  <p>• Select output rendering resolution: <strong>1024x1024</strong> or <strong>2048x2048</strong>.</p>
+                  <p>• Choose color palettes to texture and colorize the subdivision faces.</p>
               </div>
 
               <div class="help-section">
-                  <h3>3. Initial Seed & Palette Settings</h3>
-                  <p>• <strong>Seed:</strong> Sets the 4 initial node values (e.g., <code>1122</code>) of the starting seed cell.</p>
-                  <p>• <strong>Palette & Color Offset:</strong> Choose color palettes and adjust the color offset value.</p>
+                  <h3>3. Custom Caption</h3>
+                  <p>• Set custom title text to be rendered at the bottom of generated texture images along with the initial seed and genome information.</p>
               </div>
 
               <div class="help-section">
-                  <h3>4. Caption & Output Customization</h3>
-                  <p>• <strong>Caption:</strong> Custom title or author text rendered at the bottom of generated images.</p>
-                  <p>• <strong>Preview Time:</strong> Sets the division time-step depth for preview rendering.</p>
-              </div>
-
-              <div class="help-section">
-                  <h3>5. Action Buttons</h3>
+                  <h3>4. Action Buttons</h3>
                   <p>• <strong>Random:</strong> Generates a random 20-letter code sequence automatically.</p>
-                  <p>• <strong>Harvest:</strong> Starts searching and generating patterns matching your code criteria.</p>
-                  <p>• <strong>Folder:</strong> Connects a local folder to auto-save generated high-resolution images.</p>
+                  <p>• <strong>Harvest:</strong> Starts generating patterns matching your code criteria.</p>
+                  <p>• <strong>Folder:</strong> Connects a local directory to auto-save generated high-resolution images.</p>
               </div>
           </div>
           <div class="dca-help-footer">
@@ -238,10 +221,9 @@
       </div>
   </div>
   
-  <!-- 전체화면 Fullscreen Lightbox -->
+  <!-- Fullscreen Lightbox -->
   <div id="lightbox" class="lightbox">
     <div class="panel">
-      <!-- 우측 상단 Floating Save & Close 버튼 -->
       <div class="nav-controls">
         <button id="lbSave">Save</button>
         <button id="lbClose">Close</button>
@@ -281,42 +263,39 @@ $('paletteName').value = 'contrast4';
 
 function updateLegend(){ $('legend').innerHTML=''; PALETTES[$('paletteName').value].slice(0,12).forEach(hex=>{ const s=document.createElement('span'); s.className='swatch'; s.style.background=hex; $('legend').appendChild(s); }); }
 $('paletteName').addEventListener('change', updateLegend); updateLegend();
+
 const MSB_MAP = {}; (function(){ let combos=[]; function gen(start,cur){ if(cur.length===4){combos.push(cur.join('')); return;} for(let i=start;i<=4;i++) gen(i,[...cur,i]); } gen(1,[]); combos.forEach((key,idx)=>MSB_MAP[key]=idx); })();
 function getGenome(code){ var h=0, fullStr='DCA_MSB_v2|' + code.toUpperCase(); for(var i=0;i<fullStr.length;i++){ h=((h<<5)-h)+fullStr.charCodeAt(i); h|=0; } var g=[]; for(var j=0;j<45;j++){ h=Math.imul(h ^ (h>>>16),0x85ebca6b); g.push((Math.abs(h)%4)+1); } return g; }
 function rgbFromHex(hex){ const v=hex.replace('#',''); return [parseInt(v.slice(0,2),16), parseInt(v.slice(2,4),16), parseInt(v.slice(4,6),16)]; }
-function hashCode(x){ x=Math.imul(x ^ (x>>>16),2246822507); x=Math.imul(x ^ (x>>>13),3266489909); return (x ^ (x>>>16))>>>0; }
 
-function renderPaletteGrid(genome,t,seedArr,paletteName,mappingMode,offsetValue){
+function renderPaletteGrid(genome,t,seedArr,paletteName){
   const N=1<<t, total=N*N; 
   const faces=new Uint8Array(total); 
   const lineage=new Uint32Array(total); 
-  const historyFlags=new Uint8Array(total); 
   const used=new Set();
   const faceRule=genome.slice(0,35), edgeRule=genome.slice(35);
   
   const getFaceColor=(n)=>{ const idx=MSB_MAP[[...n].sort().join('')]; used.add(idx); return faceRule[idx]||4; };
   const edgeIdx=(a,b)=>{ const e=[0,1,2,3, 0,4,5,6, 0,0,7,8, 0,0,0,9][(Math.min(a,b)-1)*4 + (Math.max(a,b)-1)]; used.add(35+e); return e; };
   
-  (function subdiv(x,y,size,level,n,parentCode,parentFlag){
+  (function subdiv(x,y,size,level,n,parentCode){
     const center=getFaceColor(n); 
     const newCode=((parentCode*4 + (center-1))>>>0);
-    const currentFlag = parentFlag | (1 << (center - 1));
     
     if(level===t){ 
       const idx=y*N+x; 
       faces[idx]=center; 
       lineage[idx]=newCode; 
-      historyFlags[idx]=currentFlag;
       return; 
     }
     const half=size>>1, c1=n[0], c2=n[1], c3=n[2], c4=n[3];
     const top=edgeRule[edgeIdx(c1,c2)], right=edgeRule[edgeIdx(c2,c3)], bottom=edgeRule[edgeIdx(c3,c4)], left=edgeRule[edgeIdx(c4,c1)];
     
-    subdiv(x,y,half,level+1,[c1,top,center,left],newCode,currentFlag);
-    subdiv(x+half,y,half,level+1,[top,c2,right,center],newCode,currentFlag);
-    subdiv(x+half,y+half,half,level+1,[center,right,c3,bottom],newCode,currentFlag);
-    subdiv(x,y+half,half,level+1,[left,center,bottom,c4],newCode,currentFlag);
-  })(0,0,N,0,seedArr,0,0);
+    subdiv(x,y,half,level+1,[c1,top,center,left],newCode);
+    subdiv(x+half,y,half,level+1,[top,c2,right,center],newCode);
+    subdiv(x+half,y+half,half,level+1,[center,right,c3,bottom],newCode);
+    subdiv(x,y+half,half,level+1,[left,center,bottom,c4],newCode);
+  })(0,0,N,0,seedArr,0);
   
   const oc=document.createElement('canvas'); oc.width=N; oc.height=N; const cx=oc.getContext('2d'); const img=cx.createImageData(N,N);
   const palette=PALETTES[paletteName], palRGB=palette.map(rgbFromHex);
@@ -325,15 +304,8 @@ function renderPaletteGrid(genome,t,seedArr,paletteName,mappingMode,offsetValue)
   for(let py=0;py<N;py++){
     const row=py*N;
     for(let px=0;px<N;px++){
-      const idx=row+px; let pi;
-      
-      if(mappingMode==='last') {
-        pi=(faces[idx]-1)%numColors;
-      } else if(mappingMode === 'history16') {
-        const k = historyFlags[idx]; 
-        const hashedKey = hashCode(k + offsetValue);
-        pi = hashedKey % numColors;
-      }
+      const idx=row+px; 
+      const pi=(faces[idx]-1)%numColors;
       
       let r=palRGB[pi][0], g=palRGB[pi][1], b=palRGB[pi][2];
       const p=idx*4; img.data[p]=r; img.data[p+1]=g; img.data[p+2]=b; img.data[p+3]=255;
@@ -343,9 +315,8 @@ function renderPaletteGrid(genome,t,seedArr,paletteName,mappingMode,offsetValue)
   return {canvas:oc, usedCount:used.size, uniqueLineageStates:new Set(lineage).size};
 }
 
-function buildHiResColorCanvas(genome, code, seedStr, paletteName, mappingMode, offsetValue, previewT){
-  const t = previewT;
-  const res = renderPaletteGrid(genome, t, seedStr.split('').map(Number), paletteName, mappingMode, offsetValue);
+function buildHiResColorCanvas(genome, code, seedStr, paletteName, targetT){
+  const res = renderPaletteGrid(genome, targetT, seedStr.split('').map(Number), paletteName);
   const oc = res.canvas;
   const fc = document.createElement('canvas');
   fc.width = oc.width; fc.height = oc.height;
@@ -366,15 +337,13 @@ function buildHiResColorCanvas(genome, code, seedStr, paletteName, mappingMode, 
 
   const nameStr = $('nameInput') ? $('nameInput').value : 'DCA harvester';
 
-  const schemeTag = (mappingMode === 'last') ? 'F' : 'H';
-  const line1Text = `${seedStr} ${schemeTag} ${genome.join('')}`; 
+  const line1Text = `${seedStr} T ${genome.join('')}`; 
   const line2Text = `${nameStr}  ${dateStr}`;        
 
   const lineHeight = baseFontSize * 1.4; 
   const bottomOffset = Math.max(10, Math.floor(oc.height * 0.02));
   
   ctx.font = `bold ${baseFontSize}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
-  
   const textX = oc.width / 2;
   
   ctx.fillText(line2Text, textX, oc.height - bottomOffset);
@@ -383,19 +352,32 @@ function buildHiResColorCanvas(genome, code, seedStr, paletteName, mappingMode, 
   return {canvas: fc, usedCount: res.usedCount};
 }
 
-async function saveCanvas(canvas, filename){ if(dirHandle){ try{ const fileHandle=await dirHandle.getFileHandle(filename,{create:true}); const writable=await fileHandle.createWritable(); const blob=await new Promise(res=>canvas.toBlob(res,'image/png')); await writable.write(blob); await writable.close(); return true; }catch(e){ console.error(e); return false; } } else { const link=document.createElement('a'); link.download=filename; link.href=canvas.toDataURL(); link.click(); return true; } }
+async function saveCanvas(canvas, filename){ 
+  if(dirHandle){ 
+    try{ 
+      const fileHandle=await dirHandle.getFileHandle(filename,{create:true}); 
+      const writable=await fileHandle.createWritable(); 
+      const blob=await new Promise(res=>canvas.toBlob(res,'image/png')); 
+      await writable.write(blob); 
+      await writable.close(); 
+      return true; 
+    }catch(e){ console.error(e); return false; } 
+  } else { 
+    const link=document.createElement('a'); 
+    link.download=filename; 
+    link.href=canvas.toDataURL(); 
+    link.click(); 
+    return true; 
+  } 
+}
 
-/* ==========================================
-   🔍 확대/축소(Zoom In/Out) & 드래그 인터랙션
-   ========================================== */
+/* Lightbox Pan / Zoom */
 let currentScale = 1, currentX = 0, currentY = 0;
 let startDistance = 0, initialScale = 1;
 let isDragging = false, startX = 0, startY = 0;
 
 function updateTransform(canvasEl) {
-  if (canvasEl) {
-    canvasEl.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
-  }
+  if (canvasEl) canvasEl.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
 }
 
 function resetTransform(canvas) {
@@ -406,14 +388,10 @@ function resetTransform(canvas) {
 function initInteractiveEvents(bodyEl, canvasEl) {
   resetTransform(canvasEl);
 
-  // 1. 모바일 터치 제스처 (핀치 줌 & 1손가락 이동)
   bodyEl.ontouchstart = function(e) {
     if (e.touches.length === 2) {
       isDragging = false;
-      startDistance = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
+      startDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       initialScale = currentScale;
     } else if (e.touches.length === 1) {
       isDragging = true;
@@ -425,10 +403,7 @@ function initInteractiveEvents(bodyEl, canvasEl) {
   bodyEl.ontouchmove = function(e) {
     if (e.touches.length === 2) {
       e.preventDefault();
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       if (startDistance > 0) {
         currentScale = Math.min(Math.max(0.3, initialScale * (dist / startDistance)), 10);
         updateTransform(canvasEl);
@@ -446,21 +421,14 @@ function initInteractiveEvents(bodyEl, canvasEl) {
     if (e.touches.length === 0) isDragging = false;
   };
 
-  // 2. PC 마우스 휠 (확대 및 0.3x 축소까지 허용)
   bodyEl.onwheel = function(e) {
     e.preventDefault();
     const zoomDelta = e.deltaY < 0 ? 1.12 : 0.88;
     currentScale = Math.min(Math.max(0.3, currentScale * zoomDelta), 10);
-    
-    // 100% 이하로 작아지면 위치를 자동으로 중앙 정렬
-    if (currentScale <= 1.0) {
-      currentX = 0;
-      currentY = 0;
-    }
+    if (currentScale <= 1.0) { currentX = 0; currentY = 0; }
     updateTransform(canvasEl);
   };
 
-  // 3. PC 마우스 드래그 (이동)
   bodyEl.onmousedown = function(e) {
     if (e.button !== 0) return;
     isDragging = true;
@@ -476,25 +444,20 @@ function initInteractiveEvents(bodyEl, canvasEl) {
     }
   };
 
-  window.onmouseup = function() {
-    isDragging = false;
-  };
+  window.onmouseup = function() { isDragging = false; };
 }
 
 async function openPreview(code,g,seedStr){ 
-  const previewT = parseInt($('previewTInput').value) || 10;
-  const offsetVal = parseInt($('colorOffset').value) || 0;
-  const res=buildHiResColorCanvas(g,code,seedStr,$('paletteName').value,$('mappingMode').value,offsetVal,previewT); 
+  const imageT = parseInt($('imageSizeSelect').value) || 10;
+  const res=buildHiResColorCanvas(g,code,seedStr,$('paletteName').value,imageT); 
   $('lbBody').innerHTML=''; $('lbBody').appendChild(res.canvas); 
   $('lightbox').style.display='flex'; 
 
-  // 제스처 및 마우스 인터랙션 등록
   initInteractiveEvents($('lbBody'), res.canvas);
 
-  // 버튼 이벤트 연결 (이벤트 전파 중단 추가)
   $('lbSave').onclick = async (e) => {
     e.stopPropagation();
-    const ok = await saveCanvas(res.canvas, `DCA_P_${code}_OS${offsetVal}.png`);
+    const ok = await saveCanvas(res.canvas, `DCA_Tex_${code}.png`);
     if (ok && dirHandle) showToast('Saved!');
   };
 
@@ -507,26 +470,29 @@ async function openPreview(code,g,seedStr){
 function showToast(msg){ let t=document.createElement('div'); t.innerHTML=msg; t.style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:10px 25px; border-radius:30px; z-index:100000; font-size:13px;"; document.body.appendChild(t); setTimeout(()=>{t.style.opacity='0'; setTimeout(()=>t.remove(),500);},1500); }
 
 $('btnGen').onclick=function(){
-  const raw=$('code').value.toUpperCase(), seedStr=$('seedInput').value || "1122"; 
-  const minG=parseInt($('minGenome').value)||0, maxG=parseInt($('maxGenome').value)||45;
-  const offsetVal=parseInt($('colorOffset').value)||0;
+  const raw=$('code').value.toUpperCase();
+  const seedStr=$('symmetrySelect').value || "1122"; 
+  const imageT=parseInt($('imageSizeSelect').value) || 10;
 
   stopFlag=false; $('btnGen').disabled=true; $('btnStop').disabled=false; $('grid').innerHTML=''; $('bar').style.width='0%'; let codes=[raw];
   if(raw.includes('*')){ codes=[]; function gen(s){ if(!s.includes('*')){codes.push(s); return;} for(let c=65;c<=90;c++) gen(s.replace('*',String.fromCharCode(c))); } gen(raw); }
   let i=0; async function process(){
     if(i>=codes.length||stopFlag){ $('btnGen').disabled=false; $('btnStop').disabled=true; return; }
-    const g=getGenome(codes[i]); const testRes=renderPaletteGrid(g,7,seedStr.split('').map(Number),$('paletteName').value,$('mappingMode').value,offsetVal);
-    if(testRes.usedCount<minG||testRes.usedCount>maxG){ i++; $('bar').style.width=(i/codes.length*100)+'%'; setTimeout(process,0); return; }
-    const card=document.createElement('div'); card.className='card'; card.innerHTML=`<canvas class="thumb" width="256" height="256"></canvas><div style="padding:10px;"><div style="font-family:ui-monospace; font-size:9px; color:var(--mut); margin-bottom:6px; word-break:break-all;">${g.join('')}</div><div style="font-size:11px; color:#475569; margin-bottom:8px;">RAC ${testRes.usedCount}/45 · States ${testRes.uniqueLineageStates}</div><button class="prev-btn" style="width:100%; background:var(--brand); color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; font-weight:bold;">PREVIEW</button></div>`;
+    const g=getGenome(codes[i]); 
+    const testRes=renderPaletteGrid(g,7,seedStr.split('').map(Number),$('paletteName').value);
+    
+    const card=document.createElement('div'); card.className='card'; 
+    card.innerHTML=`<canvas class="thumb" width="256" height="256"></canvas><div style="padding:10px;"><div style="font-family:ui-monospace; font-size:9px; color:var(--mut); margin-bottom:6px; word-break:break-all;">${g.join('')}</div><div style="font-size:11px; color:#475569; margin-bottom:8px;">RAC ${testRes.usedCount}/45</div><button class="prev-btn" style="width:100%; background:var(--brand); color:#fff; border:none; padding:8px; border-radius:6px; cursor:pointer; font-weight:bold;">PREVIEW</button></div>`;
     ((c,gn,sd)=>{ card.querySelector('.prev-btn').onclick=()=>openPreview(c,gn,sd); })(codes[i],g,seedStr); $('grid').appendChild(card); card.querySelector('canvas').getContext('2d').drawImage(testRes.canvas,0,0,256,256);
+    
     if(dirHandle){ 
-      const previewT = parseInt($('previewTInput').value) || 10;
-      const hiRes=buildHiResColorCanvas(g,codes[i],seedStr,$('paletteName').value,$('mappingMode').value,offsetVal,previewT); 
-      await saveCanvas(hiRes.canvas,`DCA_P_${codes[i]}_OS${offsetVal}.png`); 
+      const hiRes=buildHiResColorCanvas(g,codes[i],seedStr,$('paletteName').value,imageT); 
+      await saveCanvas(hiRes.canvas,`DCA_Tex_${codes[i]}.png`); 
     }
     $('bar').style.width=((++i)/codes.length*100)+'%'; setTimeout(process,20);
   } process();
 };
+
 $('btnWild').onclick=function(){ let r=''; for(let i=0;i<20;i++) r+=String.fromCharCode(65+Math.floor(Math.random()*26)); $('code').value=r; $('btnGen').disabled=false; $('btnGen').click(); };
 $('btnStop').onclick=function(){ stopFlag=true; };
 $('btnFolder').onclick=async function(){ try{ dirHandle=await window.showDirectoryPicker(); $('folderLabel').textContent=`Folder: ${dirHandle.name}`; }catch(e){} };
