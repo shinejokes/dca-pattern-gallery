@@ -53,7 +53,7 @@
         .interactive-btn-group { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
         .app-btn { padding: 15px 35px; border: none; border-radius: 5px; font-weight: 700; cursor: pointer; font-family: 'Montserrat'; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
         .btn-harvester { background: var(--accent-color); color: #000; }
-        .btn-viewer { background: #4caf50; color: #fff; }
+        .btn-patch { background: #4caf50; color: #fff; }
         .app-btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
         /* 좋아요 버튼 스타일 */
@@ -138,11 +138,11 @@
         <p>By applying precise multi-color coloring logic, the structural complexity of DCA expands into a vibrant, symmetric spectrum of digital life.</p>
     </div>
 
-    <div class="sub-header">Pattern 1: TEXTURE </div>
+    <div class="sub-header">Pattern 1: Final Face Color</div>
     <p class="card-text">Cell colors based on final face color of the cells.<br><strong>Image size:</strong> 2048 x 2048 (MSB)</p>
     <div class="gallery-grid" id="p1-target"></div>
 
-    <div class="sub-header">Pattern 2: PATCH </div>
+    <div class="sub-header">Pattern 2: 16 cell groups</div>
     <p class="card-text">Cell colors based on history of face colors.<br><strong>Image size:</strong> 2048 x 2048 (MSB)</p>
     <div class="gallery-grid" id="p2-target"></div>
 
@@ -162,13 +162,15 @@
     <h2>Part 5: Discovery & Visualization Sandbox</h2>
     <div class="intro-block" style="text-align: center; border: 1px solid var(--accent-color);">
         <h3 style="margin-top: 0;">DCA Interactive Playgrounds</h3>
-        <p>Experience the mechanics of DCA first-hand. Launch the DCA Harvester to search for rare structures.</p>
+        <p>Experience the mechanics of DCA first-hand. Launch the DCA TEXTURE harvester, or the DCA PATCH harvester to search for rare structures.</p>
         
         <div class="interactive-btn-group">
             <button id="btn-load-harvester" class="app-btn btn-harvester" onclick="openApp('DCAharvesterMSB01.html')">
-                Launch DCA Harvester ↗
+                Launch TEXTUTE Harvester ↗
             </button>
-
+            <button id="btn-load-patch" class="app-btn btn-patch" onclick="openApp('DCAharvesterMSRpatch01.html')">
+                Launch PATCH harvester ↗
+            </button>
         </div>
 
         <p style="margin-top: 25px; font-size: 0.9rem; color: var(--secondary-text);">
@@ -245,11 +247,7 @@ window.onload = async function() {
         { "file": "DCA_Home209.png", "section": "p1" },
         { "file": "DCA_Home210.png", "section": "p1" },
         { "file": "DCA_Home211.png", "section": "p1" },
-        { "file": "DCA_Home212.png", "section": "p1" },  
-        { "file": "DCA_Home213.png", "section": "p1" },
-        { "file": "DCA_Home214.png", "section": "p1" },
-        { "file": "DCA_Home215.png", "section": "p1" },
-        { "file": "DCA_Home216.png", "section": "p1" }, 
+        { "file": "DCA_Home212.png", "section": "p1" },        
         { "file": "DCA_Home301.png", "section": "p2" },
         { "file": "DCA_Home302.png", "section": "p2" },
         { "file": "DCA_Home303.png", "section": "p2" },
